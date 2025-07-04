@@ -1,20 +1,20 @@
 ﻿$params = @{
-    VMName = "Win11LABENV"
-    SourcePath = "E:\Users\simon\Downloads\Win11_23H2_English_x64.iso"
-    Edition    = 6
+    VMName = "Win11_VM"
+    SourcePath = "C:\Users\luke\Downloads\pl-pl_windows_11_enterprise_ltsc_2024_x64_dvd_e00807a1.iso"
+    Edition    = 1
     VhdFormat  = "VHDX"
     DiskLayout = "UEFI"
     SizeBytes  = 128GB
     MemoryAmount = 8GB
     CPUCores = 6
     NetworkSwitch = "Default Switch"
-    VHDPath = "D:\Hyper-V\Virtual Hard Disks\"
+    VHDPath = "C:\Users\luke\VHDs\"
     UnattendPath = "$PSScriptRoot"+"\autounattend.xml"
-    GPUName = "NVIDIA GeForce RTX 2070 SUPER"
+    GPUName = "AUTO"
     GPUResourceAllocationPercentage = 50
     Team_ID = ""
     Key = ""
-    Username = "LABENV"
+    Username = "VM"
     Password = "qwerty"
     Autologon = "true"
 }
@@ -141,43 +141,6 @@ If ($ExitReason.Count -gt 0) {
         }
     SmartExit
     }
-}
-
-Function Setup-ParsecInstall {
-param(
-[string]$DriveLetter,
-[string]$Team_ID,
-[string]$Key
-)
-    $new = @()
-
-    $content = get-content "$PSScriptRoot\user\psscripts.ini" 
-
-    foreach ($line in $content) {
-        if ($line -like "0Parameters="){
-            $line = "0Parameters=$Team_ID $Key"
-            $new += $line
-            }
-        Else {
-            $new += $line
-            }
-    }
-    Set-Content -Value $new -Path "$PSScriptRoot\user\psscripts.ini"
-    if((Test-Path -Path $DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logon) -eq $true) {} Else {New-Item -Path $DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logon -ItemType directory | Out-Null}
-    if((Test-Path -Path $DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logoff) -eq $true) {} Else {New-Item -Path $DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logoff -ItemType directory | Out-Null}
-    if((Test-Path -Path $DriveLetter\Windows\system32\GroupPolicy\Machine\Scripts\Startup) -eq $true) {} Else {New-Item -Path $DriveLetter\Windows\system32\GroupPolicy\Machine\Scripts\Startup -ItemType directory | Out-Null}
-    if((Test-Path -Path $DriveLetter\Windows\system32\GroupPolicy\Machine\Scripts\Shutdown) -eq $true) {} Else {New-Item -Path $DriveLetter\Windows\system32\GroupPolicy\Machine\Scripts\Shutdown -ItemType directory | Out-Null}
-    if((Test-Path -Path $DriveLetter\ProgramData\Easy-GPU-P) -eq $true) {} Else {New-Item -Path $DriveLetter\ProgramData\Easy-GPU-P -ItemType directory | Out-Null}
-    Copy-Item -Path $psscriptroot\VMScripts\VDDMonitor.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
-    Copy-Item -Path $psscriptroot\VMScripts\VBCableInstall.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
-    Copy-Item -Path $psscriptroot\VMScripts\ParsecVDDInstall.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
-    Copy-Item -Path $psscriptroot\VMScripts\ParsecPublic.cer -Destination $DriveLetter\ProgramData\Easy-GPU-P
-    Copy-Item -Path $psscriptroot\VMScripts\Parsec.lnk -Destination $DriveLetter\ProgramData\Easy-GPU-P
-    Copy-Item -Path $psscriptroot\gpt.ini -Destination $DriveLetter\Windows\system32\GroupPolicy
-    Copy-Item -Path $psscriptroot\User\psscripts.ini -Destination $DriveLetter\Windows\system32\GroupPolicy\User\Scripts
-    Copy-Item -Path $psscriptroot\User\Install.ps1 -Destination $DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logon
-    Copy-Item -Path $psscriptroot\Machine\psscripts.ini -Destination $DriveLetter\Windows\system32\GroupPolicy\Machine\Scripts
-    Copy-Item -Path $psscriptroot\Machine\Install.ps1 -Destination $DriveLetter\Windows\system32\GroupPolicy\Machine\Scripts\Startup
 }
 
 function Convert-WindowsImage {
@@ -2493,9 +2456,6 @@ You can use the fields below to configure the VHD or VHDX that you want to creat
             Add-VMGpuPartitionAdapterFiles -GPUName $GPUName -DriveLetter $windowsDrive
             }
 
-            Write-W2VInfo "Setting up Parsec to install at boot"
-            Setup-ParsecInstall -DriveLetter $WindowsDrive -Team_ID $team_id -Key $key
-
             if ($DiskLayout -eq "UEFI")
             {
                 $systemPartition | Remove-PartitionAccessPath -AccessPath $systemPartition.AccessPaths[0]
@@ -4400,8 +4360,5 @@ New-GPUEnabledVM @params
 Start-VM -Name $params.VMName
 
 SmartExit -ExitReason "If all went well the Virtual Machine will have started, 
-In a few minutes it will load the Windows desktop, 
-when it does, sign into Parsec (a fast remote desktop app)
-and connect to the machine using Parsec from another computer. 
-Have fun!
-Sign up to Parsec at https://parsec.app"
+In a few minutes it will load the Windows desktop.
+"
